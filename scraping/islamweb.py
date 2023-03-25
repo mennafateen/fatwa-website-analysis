@@ -30,8 +30,10 @@ def make_categories_list(cats):
 
 
 def get_question(link_and_n):
+    print(link_and_n)
     link, n = link_and_n
     page, pos = divmod(n, 15)
+    print(page, pos)
     page_link = "https://www.islamweb.net" + link + "?pageno=" + str(page) + "&tab=1"
     print(page_link)
 
@@ -45,36 +47,42 @@ def get_question(link_and_n):
     except:
         question_link = "https://www.islamweb.net" + question_links[pos].find("a").get("href")
 
-    print(question_link)
     r = requests.get(question_link)
     soup = bs(r.text, "html.parser")
+
+    main_items = soup.find_all("div", class_="mainitem")
 
     question = bs(str(soup.find_all("div", class_="mainitem")[1])
                   .split('<div class="mainitem">\n<h3 class="mainitemtitle2">\r\n\t\t\t\tQuestion\r\n\t\t\t</h3>\n')[1],
                   "html.parser").text
-    answer = bs(str(soup.find_all("div", class_="mainitem")[2]).split('<div class="mainitem">\n<h3 class="mainitemtitle2">\r\n\t\t\t\tAnswer\r\n\t\t\t</h3>\n')[1], "html.parser").text
-    
-    return pd.DataFrame([[question_link, question, answer]], columns=["link", "question", "answer"])
-
-
-
-
-
+    answer = bs(str(soup.find_all("div", class_="mainitem")[2]).split('<div class="mainitem">\n<h3 class="mainitemtitle2">\r\n\t\t\t\tAnswer\r\n\t\t\t</h3>\n')[0], "html.parser").text
+    # return pd.DataFrame([[question_link, question, answer]], columns=["link", "question", "answer"])
+    return (link, question, answer)
 
 
 
 
 cats = get_categories()
-
 cat_list = make_categories_list(cats)
-
-sample_qs = sample(cat_list, 100)
+# sample_qs = sample(cat_list, 100)
 
 df = pd.DataFrame(columns=["link", "question", "answer"])
+links = []
+questions = []
+answers = []
     
-for q in sample_qs:
-    df = df.append(get_question(q))
+# for q in sample_qs:
+#     df = df.append(get_question(q))
 
+for cat in cat_list:
+    lnks, qs, ans = get_question(cat)
+    links.append(lnks)
+    questions.append(qs)
+    answers.append(ans)
+
+df['link'] = links
+df['question'] = questions
+df['answer'] = answers
 df = df.reset_index(drop=True)
 
-df.to_csv("data/islamweb.csv", index=False)
+df.to_csv("data-22/islamweb.csv", index=False)
